@@ -11,8 +11,10 @@ import (
 	secretmanager "cloud.google.com/go/secretmanager/apiv1"
 	eventrouter "github.com/genkami/go-slack-event-router"
 	"github.com/genkami/go-slack-event-router/interactionrouter"
+	"github.com/go-logr/logr"
 	"github.com/go-logr/zapr"
 	"github.com/slack-go/slack"
+	"github.com/slack-go/slack/slackevents"
 	"go.uber.org/zap"
 	secretmanagerpb "google.golang.org/genproto/googleapis/cloud/secretmanager/v1"
 
@@ -60,17 +62,6 @@ func (p *Params) Setup() {
 func main() {
 	var p Params
 	p.Setup()
-	eventRouter, err := eventrouter.New(eventrouter.WithSigningSecret(p.Slack.SigningSecret))
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to initialize event router: %s\n", err.Error())
-		os.Exit(1)
-	}
-	interactionRouter, err := interactionrouter.New(interactionrouter.WithSigningSecret(p.Slack.SigningSecret))
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to initialize interaction router: %s\n", err.Error())
-		os.Exit(1)
-	}
-	client := slack.New(p.Slack.BotToken)
 
 	zapLog, err := zap.NewProduction()
 	if err != nil {
@@ -78,6 +69,21 @@ func main() {
 		os.Exit(1)
 	}
 	log := zapr.NewLogger(zapLog)
+
+	eventRouter, err := eventrouter.New(eventrouter.WithSigningSecret(p.Slack.SigningSecret))
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "failed to initialize event router: %s\n", err.Error())
+		os.Exit(1)
+	}
+	eventRouter.SetFallback(eventFallbackHandler(log))
+
+	interactionRouter, err := interactionrouter.New(interactionrouter.WithSigningSecret(p.Slack.SigningSecret))
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "failed to initialize interaction router: %s\n", err.Error())
+		os.Exit(1)
+	}
+
+	client := slack.New(p.Slack.BotToken)
 
 	f := &framework.Framework{
 		EventRouter:       eventRouter,
@@ -105,3 +111,10 @@ func main() {
 var healthHandler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusOK)
 })
+
+func eventFallbackHandler(log logr.Logger) eventrouter.Handler {
+	return eventrouter.HandlerFunc(func(ctx context.Context, e *slackevents.EventsAPIEvent) error {
+		log.Info("ignored", "event", e)
+		return nil
+	})
+}
