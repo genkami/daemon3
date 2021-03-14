@@ -75,9 +75,13 @@ func main() {
 		InteractionRouter: interactionRouter,
 		Client:            client,
 	}
-	framework.Use(
+	err = framework.Use(
 		echo.NewHandler(),
 	)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "failed to set up handlers: %s\n", err.Error())
+		os.Exit(1)
+	}
 
 	http.Handle("/slack/events", framework.EventRouter)
 	http.Handle("/slack/actions", framework.InteractionRouter)
