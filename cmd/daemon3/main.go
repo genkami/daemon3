@@ -20,6 +20,7 @@ import (
 
 	"github.com/genkami/daemon3/pkg/framework"
 	"github.com/genkami/daemon3/pkg/handlers/echo"
+	"github.com/genkami/daemon3/pkg/handlers/holodule"
 )
 
 type Params struct {
@@ -93,6 +94,7 @@ func main() {
 	}
 	err = f.Use(
 		echo.NewHandler(),
+		holodule.NewHandler(),
 	)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to set up handlers: %s\n", err.Error())
