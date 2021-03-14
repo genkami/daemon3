@@ -56,7 +56,8 @@ func (h *Handler) HandleHolodule(ctx context.Context, e *slackevents.AppMentionE
 			h.framework.Log.Error(err, "failed to update schedule")
 			return err
 		}
-		*h.lastScheduleUpdated = time.Now()
+		now := time.Now()
+		h.lastScheduleUpdated = &now
 	}
 	err = h.postSchedule(ctx, e.Channel)
 	if err != nil {
