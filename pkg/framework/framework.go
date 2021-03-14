@@ -60,7 +60,7 @@ func (f *Framework) buildHelpText() string {
 	for name := range f.helps {
 		names = append(names, name)
 	}
-	sort.Sort(sort.StringSlice(names))
+	sort.Strings(names)
 	for _, name := range names {
 		fmt.Fprintf(buf, "*%s*: %s\n", name, f.helps[name])
 	}
