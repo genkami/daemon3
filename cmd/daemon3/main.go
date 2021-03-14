@@ -70,12 +70,12 @@ func main() {
 	}
 	client := slack.New(p.Slack.BotToken)
 
-	framework := &framework.Framework{
+	f := &framework.Framework{
 		EventRouter:       eventRouter,
 		InteractionRouter: interactionRouter,
 		Client:            client,
 	}
-	err = framework.Use(
+	err = f.Use(
 		echo.NewHandler(),
 	)
 	if err != nil {
@@ -83,8 +83,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	http.Handle("/slack/events", framework.EventRouter)
-	http.Handle("/slack/actions", framework.InteractionRouter)
+	http.Handle("/slack/events", f.EventRouter)
+	http.Handle("/slack/actions", f.InteractionRouter)
 	http.Handle("/healthz", healthHandler)
 	if err := http.ListenAndServe(p.BindAddr, nil); err != nil && err != http.ErrServerClosed {
 		fmt.Fprintf(os.Stderr, "server error: %s\n", err.Error())
