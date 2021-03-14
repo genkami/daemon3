@@ -23,6 +23,7 @@ func NewHandler() *Handler {
 func (h *Handler) Register(f *framework.Framework) error {
 	h.framework = f
 	f.EventRouter.OnAppMention(appmention.HandlerFunc(h.HandleEcho), appmention.TextRegexp(regexp.MustCompile(`\becho\b`)))
+	f.Help("echo", "post arguments")
 	return nil
 }
 
