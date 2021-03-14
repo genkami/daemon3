@@ -28,13 +28,12 @@ func (h *Handler) Register(f *framework.Framework) error {
 
 var echoPattern = regexp.MustCompile(`\becho[[:space:]]+(.+)`)
 
-func (h *Handler) HandleEcho(e *slackevents.AppMentionEvent) error {
+func (h *Handler) HandleEcho(ctx context.Context, e *slackevents.AppMentionEvent) error {
 	groups := echoPattern.FindStringSubmatch(e.Text)
 	if len(groups) < 2 {
 		return routererrors.NotInterested
 	}
 	arg := groups[1]
-	ctx := context.TODO()
 	if _, _, err := h.framework.Client.PostMessageContext(ctx, e.Channel, slack.MsgOptionText(arg, true)); err != nil {
 		return err
 	}
