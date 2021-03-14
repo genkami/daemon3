@@ -1,6 +1,7 @@
 package holodule
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"regexp"
@@ -68,28 +69,13 @@ func (h *Handler) HandleHolodule(ctx context.Context, e *slackevents.AppMentionE
 }
 
 func (h *Handler) postSchedule(ctx context.Context, channel string) error {
-	blocks := make([]slack.Block, 0, 20) // random large number
-	blocks = append(blocks,
-		slack.NewHeaderBlock(
-			slack.NewTextBlockObject(
-				slack.MarkdownType,
-				"*Schedule*",
-				false, false,
-			)))
+	buf := bytes.NewBuffer(nil)
+	fmt.Fprintf(buf, "*Schedule*\n")
 	for i := range h.lastSchedule.Items {
 		item := &h.lastSchedule.Items[i]
-		blocks = append(blocks,
-			slack.NewSectionBlock(
-				slack.NewTextBlockObject(
-					slack.MarkdownType,
-					fmt.Sprintf("*%s* <%s|%s> %s", item.Time, item.URL, item.Name, item.Icon),
-					false, false,
-				),
-				nil, nil,
-			),
-		)
+		fmt.Fprintf(buf, "*%s* <%s|%s> %s\n", item.Time, item.URL, item.Name, item.Icon)
 	}
-	_, _, err := h.framework.Client.PostMessageContext(ctx, channel, slack.MsgOptionBlocks(blocks...))
+	_, _, err := h.framework.Client.PostMessageContext(ctx, channel, slack.MsgOptionText(buf.String(), false))
 	return err
 }
 
