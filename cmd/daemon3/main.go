@@ -11,7 +11,9 @@ import (
 	secretmanager "cloud.google.com/go/secretmanager/apiv1"
 	eventrouter "github.com/genkami/go-slack-event-router"
 	"github.com/genkami/go-slack-event-router/interactionrouter"
+	"github.com/go-logr/zapr"
 	"github.com/slack-go/slack"
+	"go.uber.org/zap"
 	secretmanagerpb "google.golang.org/genproto/googleapis/cloud/secretmanager/v1"
 
 	"github.com/genkami/daemon3/pkg/framework"
@@ -70,10 +72,18 @@ func main() {
 	}
 	client := slack.New(p.Slack.BotToken)
 
+	zapLog, err := zap.NewProduction()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "failed to initialize logger: %s\n", err.Error())
+		os.Exit(1)
+	}
+	log := zapr.NewLogger(zapLog)
+
 	f := &framework.Framework{
 		EventRouter:       eventRouter,
 		InteractionRouter: interactionRouter,
 		Client:            client,
+		Log:               log,
 	}
 	err = f.Use(
 		echo.NewHandler(),
